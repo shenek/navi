@@ -10,9 +10,9 @@ use structopt::{clap::AppSettings, StructOpt};
     navi best 'sql create db' root mydb    # uses a snippet as a CLI
     navi repo add denisidoro/cheats        # imports cheats from github.com/denisidoro/cheats
     source <(navi widget zsh)              # loads the zsh widget
-    navi --fzf-overrides ' --with-nth 1,2' # shows only the comment and tag columns
-    navi --fzf-overrides ' --nth 1,2'      # search will consider only the first two columns
-    navi --fzf-overrides ' --no-exact'     # looser search algorithm"#)]
+    navi --finder-overrides ' --with-nth 1,2' # shows only the comment and tag columns
+    navi --finder-overrides ' --nth 1,2'      # search will consider only the first two columns
+    navi --finder-overrides ' --no-exact'     # looser search algorithm"#)]
 #[structopt(setting = AppSettings::ColorAuto)]
 #[structopt(setting = AppSettings::ColoredHelp)]
 #[structopt(setting = AppSettings::AllowLeadingHyphen)]
@@ -37,13 +37,13 @@ pub struct Config {
     #[structopt(long)]
     pub no_preview: bool,
 
-    /// FZF overrides for cheat selection
-    #[structopt(long, env = "NAVI_FZF_OVERRIDES")]
-    pub fzf_overrides: Option<String>,
+    /// FINDER overrides for cheat selection
+    #[structopt(long, env = "NAVI_FINDER_OVERRIDES")]
+    pub finder_overrides: Option<String>,
 
-    /// FZF overrides for variable selection
-    #[structopt(long, env = "NAVI_FZF_OVERRIDES_VAR")]
-    pub fzf_overrides_var: Option<String>,
+    /// FINDER overrides for variable selection
+    #[structopt(long, env = "NAVI_FINDER_OVERRIDES_VAR")]
+    pub finder_overrides_var: Option<String>,
 
     #[structopt(subcommand)]
     pub cmd: Option<Command>,
@@ -80,7 +80,7 @@ pub enum Command {
         #[structopt(subcommand)]
         cmd: RepoCommand,
     },
-    /// Used for fzf's preview window
+    /// Used for finder's preview window
     #[structopt(setting = AppSettings::Hidden)]
     Preview {
         /// Selection line

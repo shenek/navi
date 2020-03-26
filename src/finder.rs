@@ -1,6 +1,6 @@
 use crate::display;
 use crate::structures::cheat::VariableMap;
-use crate::structures::fzf::{Opts, SuggestionType};
+use crate::structures::finder::{Opts, SuggestionType};
 use anyhow::Context;
 use anyhow::Error;
 use std::process;
