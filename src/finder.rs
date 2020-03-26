@@ -4,9 +4,7 @@ use crate::structures::finder::{Opts, SuggestionType};
 use anyhow::Context;
 use anyhow::Error;
 use skim::prelude::*;
-use std::io::{stdin, Cursor, IoSlice, Write};
-use std::process;
-use std::process::{Command, Stdio};
+use std::io::{Cursor, Seek, SeekFrom};
 
 impl<'a> From<&'a Opts> for SkimOptions<'a> {
     fn from(opts: &'a Opts) -> SkimOptions<'a> {
@@ -75,26 +73,39 @@ where
     let options: SkimOptions = SkimOptions::from(&opts);
 
     let reader = SkimItemReader::default();
-    let mut buff = vec![];
-    let mut cursor = Cursor::new(buff);
+    let mut cursor = Cursor::new(vec![]);
 
-    let map = write_fn(&mut cursor)?;
+    let result_map = write_fn(&mut cursor).context("Failed to pass data to fzf")?;
 
+    cursor.set_position(0);
     let items = reader.of_bufread(cursor);
+    let selected_items = Skim::run_with(&options, Some(items)).map(|out| out.selected_items);
 
-    Ok(("".into(), None))
+    let result: Vec<String> = selected_items
+        .unwrap_or_else(|| vec![])
+        .iter()
+        .map(|item| item.text().to_string())
+        .collect();
+    dbg!(&result);
+
+    let delimeter = if let Some(delim) = &opts.delimiter {
+        Some(delim.as_str())
+    } else {
+        None
+    };
+
+    Ok((get_column(result, opts.column, delimeter), result_map))
 }
 
-/*
-fn get_column(text: String, column: Option<u8>, delimiter: Option<&str>) -> String {
+fn get_column(lines: Vec<String>, column: Option<u8>, delimiter: Option<&str>) -> String {
     if let Some(c) = column {
         let mut result = String::from("");
         let re = regex::Regex::new(delimiter.unwrap_or(r"\s\s+")).expect("Invalid regex");
-        for line in text.split('\n') {
+        for line in lines {
             if (&line).is_empty() {
                 continue;
             }
-            let mut parts = re.split(line).skip((c - 1) as usize);
+            let mut parts = re.split(&line).skip((c - 1) as usize);
             if !result.is_empty() {
                 result.push('\n');
             }
@@ -102,10 +113,12 @@ fn get_column(text: String, column: Option<u8>, delimiter: Option<&str>) -> Stri
         }
         result
     } else {
-        text
+        dbg!("XX", &lines);
+        lines.join("\n")
     }
 }
 
+/*
 pub fn call<F>(opts: Opts, stdin_fn: F) -> Result<(String, Option<VariableMap>), Error>
 where
     F: Fn(&mut process::ChildStdin) -> Result<Option<VariableMap>, Error>,

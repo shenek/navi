@@ -13,7 +13,7 @@ use anyhow::Error;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-use std::io::{Cursor, Write};
+use std::io::Write;
 use std::process::{Command, Stdio};
 
 lazy_static! {
@@ -57,6 +57,9 @@ fn extract_from_selections(raw_snippet: &str, contains_key: bool) -> (&str, &str
     } else {
         "enter"
     };
+
+    dbg!(&lines);
+    dbg!(&lines.next());
 
     let mut parts = lines
         .next()

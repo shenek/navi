@@ -8,7 +8,8 @@ fn gen_key(tags: &str, variable: &str) -> u64 {
     format!("{};{}", tags, variable).hash_line()
 }
 
-pub struct VariableMap(HashMap<u64, Suggestion>);
+#[derive(Clone)]
+pub struct VariableMap(pub HashMap<u64, Suggestion>);
 
 impl VariableMap {
     pub fn new() -> Self {

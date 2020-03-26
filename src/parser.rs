@@ -278,18 +278,19 @@ mod tests {
             })
         );
     }
+    use std::io::Cursor;
     use std::process::{Command, Stdio};
 
     #[test]
     fn test_read_file() {
         let path = "tests/cheats/ssh.cheat";
         let mut variables = VariableMap::new();
-        let mut child = Command::new("cat").stdin(Stdio::piped()).spawn().unwrap();
-        let child_stdin = child.stdin.as_mut().unwrap();
+        let text = r#" echo -e "$(whoami)\nroot" "#.to_string();
+        let mut cursor = Cursor::new(text.as_bytes().to_vec());
         let mut visited_lines: HashSet<u64> = HashSet::new();
-        read_file(path, &mut variables, &mut visited_lines, child_stdin).unwrap();
+        read_file(path, &mut variables, &mut visited_lines, &mut cursor).unwrap();
         let expected_suggestion = (
-            r#" echo -e "$(whoami)\nroot" "#.to_string(),
+            text,
             Some(FinderOpts {
                 header_lines: 0,
                 column: None,
