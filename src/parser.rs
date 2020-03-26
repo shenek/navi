@@ -9,7 +9,7 @@ use anyhow::{Context, Error};
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs;
-use std::io::Write;
+use std::io::{Cursor, Write};
 
 lazy_static! {
     pub static ref VAR_LINE_REGEX: Regex =
@@ -115,7 +115,7 @@ fn write_cmd(
     snippet: &str,
     tag_width: usize,
     comment_width: usize,
-    stdin: &mut std::process::ChildStdin,
+    stdin: &mut Cursor<Vec<u8>>,
 ) -> Result<(), Error> {
     if snippet.is_empty() {
         Ok(())
@@ -133,7 +133,7 @@ fn read_file(
     path: &str,
     variables: &mut VariableMap,
     visited_lines: &mut HashSet<u64>,
-    stdin: &mut std::process::ChildStdin,
+    stdin: &mut Cursor<Vec<u8>>,
 ) -> Result<(), Error> {
     let mut tags = String::from("");
     let mut comment = String::from("");
@@ -216,10 +216,7 @@ fn paths_from_path_param<'a>(env_var: &'a str) -> impl Iterator<Item = &'a str> 
     env_var.split(':').filter(|folder| folder != &"")
 }
 
-pub fn read_all(
-    config: &Config,
-    stdin: &mut std::process::ChildStdin,
-) -> Result<VariableMap, Error> {
+pub fn read_all(config: &Config, stdin: &mut Cursor<Vec<u8>>) -> Result<VariableMap, Error> {
     let mut variables = VariableMap::new();
     let mut found_something = false;
     let mut visited_lines = HashSet::new();

@@ -13,7 +13,7 @@ use anyhow::Error;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
-use std::io::Write;
+use std::io::{Cursor, Write};
 use std::process::{Command, Stdio};
 
 lazy_static! {
@@ -107,8 +107,13 @@ fn prompt_with_suggestions(
         ..opts
     };
 
-    let (output, _) =
-        finder::call(opts, suggestions).context("finder was unable to prompt with suggestions")?;
+    let (output, _) = finder::call(opts, |stdin| {
+        stdin
+            .write_all(suggestions.as_bytes())
+            .context("Could not write to finder's stdin")?;
+        Ok(None)
+    })
+    .context("finder was unable to prompt with suggestions")?;
 
     Ok(output)
 }
@@ -121,7 +126,7 @@ fn prompt_without_suggestions(variable_name: &str) -> Result<String, Error> {
         ..Default::default()
     };
 
-    let (output, _) = finder::call(opts, String::new())
+    let (output, _) = finder::call(opts, |_stdin| Ok(None))
         .context("finder was unable to prompt without suggestions")?;
 
     Ok(output)

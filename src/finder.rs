@@ -4,7 +4,7 @@ use crate::structures::finder::{Opts, SuggestionType};
 use anyhow::Context;
 use anyhow::Error;
 use skim::prelude::*;
-use std::io::{stdin, Cursor};
+use std::io::{stdin, Cursor, IoSlice, Write};
 use std::process;
 use std::process::{Command, Stdio};
 
@@ -68,11 +68,19 @@ impl<'a> From<&'a Opts> for SkimOptions<'a> {
     }
 }
 
-pub fn call(opts: Opts, input: String) -> Result<(String, Option<VariableMap>), Error> {
-    let options = SkimOptions::default();
+pub fn call<F>(opts: Opts, write_fn: F) -> Result<(String, Option<VariableMap>), Error>
+where
+    F: Fn(&mut Cursor<Vec<u8>>) -> Result<Option<VariableMap>, Error>,
+{
+    let options: SkimOptions = SkimOptions::from(&opts);
 
     let reader = SkimItemReader::default();
-    let items = reader.of_bufread(Cursor::new(input));
+    let mut buff = vec![];
+    let mut cursor = Cursor::new(buff);
+
+    let map = write_fn(&mut cursor)?;
+
+    let items = reader.of_bufread(cursor);
 
     Ok(("".into(), None))
 }

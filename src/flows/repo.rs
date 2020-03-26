@@ -6,7 +6,7 @@ use anyhow::Context;
 use anyhow::Error;
 use git2::Repository;
 use std::fs;
-use std::io::Write;
+use std::io::{Cursor, Write};
 use walkdir::WalkDir;
 
 pub fn browse() -> Result<(), Error> {
@@ -30,7 +30,13 @@ pub fn browse() -> Result<(), Error> {
         ..Default::default()
     };
 
-    let (repo, _) = finder::call(opts, repos).context("Failed to get repo URL from finder")?;
+    let (repo, _) = finder::call(opts, |stdin: &mut Cursor<Vec<u8>>| {
+        stdin
+            .write_all(repos.as_bytes())
+            .context("Unable to prompt featured repositories")?;
+        Ok(None)
+    })
+    .context("Failed to get repo URL from finder")?;
 
     filesystem::remove_dir(&repo_path_str)?;
 
@@ -71,8 +77,13 @@ pub fn add(uri: String) -> Result<(), Error> {
         ..Default::default()
     };
 
-    let (files, _) =
-        finder::call(opts, all_files).context("Failed to get cheatsheet files from finder")?;
+    let (files, _) = finder::call(opts, |stdin: &mut Cursor<Vec<u8>>| {
+        stdin
+            .write_all(all_files.as_bytes())
+            .context("Unable to prompt cheats to import")?;
+        Ok(None)
+    })
+    .context("Failed to get cheatsheet files from finder")?;
 
     for f in files.split('\n') {
         let from = format!("{}/{}", tmp_path_str, f).replace("./", "");

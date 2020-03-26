@@ -1,13 +1,13 @@
 use crate::display;
-use std::io::Write;
+use std::io::{Cursor, Write};
 
-fn add_msg(tag: &str, comment: &str, snippet: &str, stdin: &mut std::process::ChildStdin) {
+fn add_msg(tag: &str, comment: &str, snippet: &str, stdin: &mut Cursor<Vec<u8>>) {
     stdin
         .write_all(display::format_line(tag, comment, snippet, 20, 60).as_bytes())
         .expect("Could not write to finder's stdin");
 }
 
-pub fn cheatsheet(stdin: &mut std::process::ChildStdin) {
+pub fn cheatsheet(stdin: &mut Cursor<Vec<u8>>) {
     add_msg(
         "cheatsheets",
         "Download default cheatsheets",
