@@ -3,9 +3,81 @@ use crate::structures::cheat::VariableMap;
 use crate::structures::finder::{Opts, SuggestionType};
 use anyhow::Context;
 use anyhow::Error;
+use skim::prelude::*;
+use std::io::{stdin, Cursor};
 use std::process;
 use std::process::{Command, Stdio};
 
+impl<'a> From<&'a Opts> for SkimOptions<'a> {
+    fn from(opts: &'a Opts) -> SkimOptions<'a> {
+        let mut options = SkimOptions::default();
+        options.preview_window = Some("up:2");
+        options.with_nth = Some("1,2,3");
+        options.delimiter = Some(display::DELIMITER);
+        options.ansi = true;
+        options.bind = vec!["ctrl-j:down", "ctrl-k:up"];
+        options.exact = true;
+
+        if opts.autoselect {
+            // TODO not implmentend in skim yet
+            // options.select_1 = True
+        }
+
+        match opts.suggestion_type {
+            SuggestionType::MultipleSelections => {
+                options.multi = true;
+            }
+            SuggestionType::Disabled => {
+                options.print_query = true;
+                options.height = Some("1");
+            }
+            SuggestionType::SnippetSelection => {
+                options.expect = Some("ctrl-y,enter".into());
+            }
+            SuggestionType::SingleRecommendation => {
+                options.print_query = true;
+                options.expect = Some("tab,enter".into());
+            }
+            _ => {}
+        }
+
+        if let Some(preview) = &opts.preview {
+            options.preview = Some(preview);
+        }
+        if let Some(query) = &opts.query {
+            options.query = Some(query);
+        }
+        if let Some(filter) = &opts.filter {
+            options.filter = filter;
+        }
+        if let Some(header) = &opts.header {
+            options.header = Some(header);
+        }
+        if let Some(prompt) = &opts.prompt {
+            options.prompt = Some(prompt);
+        }
+        if let Some(preview_window) = &opts.preview_window {
+            options.preview_window = Some(preview_window);
+        }
+        options.header_lines = opts.header_lines.into();
+
+        // TODO overrides
+        // options.override = opts.overrides
+
+        options
+    }
+}
+
+pub fn call(opts: Opts, input: String) -> Result<(String, Option<VariableMap>), Error> {
+    let options = SkimOptions::default();
+
+    let reader = SkimItemReader::default();
+    let items = reader.of_bufread(Cursor::new(input));
+
+    Ok(("".into(), None))
+}
+
+/*
 fn get_column(text: String, column: Option<u8>, delimiter: Option<&str>) -> String {
     if let Some(c) = column {
         let mut result = String::from("");
@@ -239,3 +311,4 @@ mod tests {
         assert_eq!(output,     "enter\nssh                     ⠀login to a server and forward to ssh key (d…  ⠀ssh -A <user>@<server>  ⠀ssh  ⠀login to a server and forward to ssh key (dangerous but usefull for bastion hosts)  ⠀ssh -A <user>@<server>  ⠀");
     }
 }
+*/
